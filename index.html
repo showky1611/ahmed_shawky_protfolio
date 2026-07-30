@@ -1285,13 +1285,18 @@
                     </div>
                 </div>
 
-                <!-- Demo Video Tab -->
+                <!-- Demo Video Tab (FIXED: video element + placeholder are separate, video is never removed from the DOM) -->
                 <div class="tab-content" id="tab-demo">
                     <div class="video-container" id="videoContainer">
-                        <video controls id="demoVideo" poster="">
-                            <source src="" type="video/mp4">
+                        <video controls id="demoVideo" poster="" style="display:none;">
+                            <source id="demoVideoSource" src="" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
+                        <div class="video-empty" id="videoEmpty" style="display:none;">
+                            <i class="fas fa-video"></i>
+                            <p>No demo video found.</p>
+                            <p style="font-size: 0.85rem; margin-top: 0.5rem;">Add your demo.mp4 file to the project folder.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1378,10 +1383,6 @@
         // ============================================
         // PROJECTS DATA
         // ============================================
-        // IMPORTANT: Add your images in the "details" folder of each project.
-        // The code will automatically detect how many images are there.
-        // If you want to specify exact images, replace the "details" array below.
-        // ============================================
         const projectsData = [
             {
                 id: 0,
@@ -1389,7 +1390,6 @@
                 overview: `Configured and secured a <strong>FortiGate Firewall</strong> by implementing firewall policies, NAT, and security rules, along with an <strong>IPsec Site-to-Site VPN</strong> for encrypted communication between remote networks. The project focused on secure traffic management, access control, and enterprise-grade network protection following best security practices.`,
                 tags: ["FortiGate", "VPN", "Security", "policies", "IPsec"],
                 poster: "projects/4Ti/Poster_VPN.png",
-                // List your detail images here (or leave empty array to auto-detect)
                 details: [
                     "projects/4Ti/details/img1.png",
                     "projects/4Ti/details/img2.png",
@@ -1478,30 +1478,18 @@
             document.getElementById('projectModal').classList.remove('active');
             document.body.style.overflow = '';
 
-            // Pause video when closing
+            // Pause video when closing (guarded: element is now never removed from the DOM,
+            // but we still check for null defensively)
             const video = document.getElementById('demoVideo');
-            video.pause();
-            video.currentTime = 0;
+            if (video) {
+                video.pause();
+                video.currentTime = 0;
+            }
         }
 
         // ============================================
         // SWITCH TABS
         // ============================================
-        function switchTab(tabName) {
-            // Update tab buttons
-            document.querySelectorAll('.modal-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.currentTarget.classList.add('active');
-
-            // Update content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById('tab-' + tabName).classList.add('active');
-        }
-
-        // Fix for programmatic tab switching
         function switchTab(tabName) {
             document.querySelectorAll('.modal-tab').forEach((tab, index) => {
                 tab.classList.remove('active');
@@ -1590,8 +1578,13 @@
         // ============================================
         async function loadConfig() {
             const configBlock = document.getElementById('configBlock');
-            const configText = document.getElementById('configText');
             const copyBtn = document.getElementById('copyBtn');
+
+            // Reset config block back to its default markup each time,
+            // in case a previous call replaced it with the "empty" message.
+            configBlock.classList.remove('config-empty');
+            configBlock.innerHTML = '<pre id="configText"></pre>';
+            const configText = document.getElementById('configText');
 
             try {
                 const response = await fetch(currentProject.config);
@@ -1599,7 +1592,6 @@
                     currentConfigText = await response.text();
                     configText.textContent = currentConfigText;
                     copyBtn.style.display = 'flex';
-                    configBlock.classList.remove('config-empty');
                 } else {
                     throw new Error('Config not found');
                 }
@@ -1633,36 +1625,44 @@
         }
 
         // ============================================
-        // VIDEO FUNCTIONS
+        // VIDEO FUNCTIONS (FIXED)
+        // The real <video id="demoVideo"> element and its "not found" placeholder
+        // now live side by side in the DOM permanently. We only toggle which one
+        // is visible instead of destroying/rebuilding the container's innerHTML.
+        // This was the root cause of the "works once, then modal won't reopen" bug:
+        // the old code replaced #demoVideo with a plain <div> when no video was found,
+        // so the next time openProject() ran, document.getElementById('demoVideo')
+        // returned null and calling .pause() on it threw an error that stopped the
+        // rest of openProject() from running (so the modal never opened again).
         // ============================================
         function setupVideo() {
             const video = document.getElementById('demoVideo');
-            const container = document.getElementById('videoContainer');
+            const source = document.getElementById('demoVideoSource');
+            const emptyState = document.getElementById('videoEmpty');
 
-            // Reset video
+            if (!video || !source || !emptyState) return; // safety guard
+
+            // Reset state
             video.pause();
             video.removeAttribute('src');
+            video.style.display = 'none';
+            emptyState.style.display = 'none';
             video.load();
 
-            // Check if video exists by trying to load it
+            // Probe whether the demo file actually exists
             const testVideo = document.createElement('video');
             testVideo.src = currentProject.demo;
 
-            testVideo.onloadeddata = function() {
-                video.src = currentProject.demo;
+            testVideo.onloadeddata = function () {
+                source.src = currentProject.demo;
+                video.style.display = 'block';
+                emptyState.style.display = 'none';
                 video.load();
-                container.innerHTML = '';
-                container.appendChild(video);
             };
 
-            testVideo.onerror = function() {
-                container.innerHTML = `
-                    <div class="video-empty">
-                        <i class="fas fa-video"></i>
-                        <p>No demo video found.</p>
-                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Add your demo.mp4 file to the project folder.</p>
-                    </div>
-                `;
+            testVideo.onerror = function () {
+                video.style.display = 'none';
+                emptyState.style.display = 'block';
             };
         }
 
@@ -1762,7 +1762,7 @@
         });
 
         // ============================================
-        // SMOOTH SCROLL _mFOR ANCHOR LINKS
+        // SMOOTH SCROLL FOR ANCHOR LINKS
         // ============================================
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
