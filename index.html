@@ -1217,12 +1217,29 @@
                         </div>
                     </div>
                 </div>
+                <div class="project-card" onclick="openProject(3)">
+                    <div class="project-image">
+                        <img src="projects/Multi-ISP/poster.png" alt="Multi-ISP" loading="lazy">
+                    </div>
+                    <div class="project-content">
+                        <h3 class="project-title">Enterprise Multi-Area OSPF Network with High Availability</h3>
+                        <p class="project-description">
+                            Designed a highly available enterprise network consisting of multiple branch offices interconnected through a resilient Multi-Area OSPF architecture. Implemented hierarchical routing with Area 0 as the backbone, enabling efficient route propagation, scalability, and optimized SPF calculations. Built a redundant ISP core with multiple routing paths to eliminate single points of failure, ensuring automatic failover and rapid convergence during link outages. The project validates enterprise-grade routing principles, fault tolerance, and high availability in large-scale network environments.                        </p>
+                        <div class="project-tags">
+                            <span class="project-tag">Multi-ISP</span>
+                            <span class="project-tag">OSPF</span>
+                            <span class="project-tag">High Availability</span>
+                            <span class="project-tag">Multi-Area</span>
+                            <span class="project-tag">Redundant ISP core</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- ============================================
-         PROJECT MODAL
+         PROJECT MODAL 
          ============================================ -->
     <div class="modal-overlay" id="projectModal">
         <div class="modal-container">
@@ -1427,11 +1444,26 @@
                 ],
                 config: "projects/VPN-Site-TO-Site/config.txt",
                 demo: "projects/VPN-Site-TO-Site/demo.mp4"
+            },
+
+            {
+                id: 3,
+                title: "Enterprise Multi-Area OSPF Network with High Availability",
+                overview: `Designed a highly available enterprise network consisting of multiple branch offices interconnected through a resilient Multi-Area OSPF architecture. Implemented hierarchical routing with Area 0 as the backbone, enabling efficient route propagation, scalability, and optimized SPF calculations. Built a redundant ISP core with multiple routing paths to eliminate single points of failure, ensuring automatic failover and rapid convergence during link outages. The project validates enterprise-grade routing principles, fault tolerance, and high availability in large-scale network environments.`,
+                tags: ["Multi-ISP", "OSPF", "High Availability", "Multi-Area", "Redundant ISP core"],
+                poster: "projects/Multi-ISP/poster_VPN.png",
+                details: [
+                    "projects/Multi-ISP/details/img1.png",
+                    "projects/Multi-ISP/details/img2.png",
+                    "projects/Multi-ISP/details/img3.png"
+                ],
+                config: "projects/Multi-ISP/config.txt",
+                demo: "projects/Multi-ISP/demo.mp4"
             }
         ];
 
         // ============================================
-        // MODAL STATE _
+        // MODAL STATE --
         // ============================================
         let currentProject = null;
         let currentImageIndex = 0;
